@@ -54,13 +54,18 @@ class TodoListViewController: UITableViewController {
     
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        //  print(itemArray[indexPath.row])
-        //        context.delete(itemArray[indexPath.row])
-        //         itemArray.remove(at: indexPath.row)
+        if let item = todoItems?[indexPath.row] {
+            do {
+                try realm.write {
+                    item.done = !item.done
+                }
+            } catch {
+                print(error)
+            }
+            
+        }
         
-//        todoItems[indexPath.row].done = !todoItems[indexPath.row].done
-//        saveItems()
-        
+        tableView.reloadData()
         
         tableView.deselectRow(at: indexPath, animated: true)
         
@@ -77,20 +82,14 @@ class TodoListViewController: UITableViewController {
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             
             // What will happen once the user clicks the add item button
-//
-//
-//            let newItem = Item(context: self.context)
-//            newItem.title = textField.text!
-//            newItem.done = false
-//            newItem.parentCategory = self.selectedCategory
-//            self.itemArray.append(newItem)
-//            self.saveItems()
-            
             if let currentCategory = self.selectedCategory {
                 do {
                     try self.realm.write {
                         let newItem = Item()
                         newItem.title = textField.text!
+                        let date = Date()
+//                        let formatter = DateFormatter()
+                        newItem.dateCreated = date
                         currentCategory.items.append(newItem)
                     }
                 }
@@ -108,7 +107,12 @@ class TodoListViewController: UITableViewController {
             
         }
         
+        let cancel = UIAlertAction(title: "Cancel", style: .default) { (cancel) in
+            self.tableView.reloadData()
+        }
+        
         alert.addAction(action)
+        alert.addAction(cancel)
         
         present(alert, animated: true, completion: nil)
         
@@ -127,39 +131,31 @@ class TodoListViewController: UITableViewController {
 }
 // Mark :- Search Bar method
 
-//extension TodoListViewController: UISearchBarDelegate{
-//
-//    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-//
-//        let request : NSFetchRequest<Item> = Item.fetchRequest()
-//
-//        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)//%@ sign subtututes any arguments which you try to substitute
-//
-//
-//        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-//
-//        loadItems(with: request, predicate: predicate)
-//
-//
-//    }
-//
-//    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-//        if searchBar.text?.count == 0{
-//            loadItems()
-//
-////            DispatchQueue.main.async { //DispatchQueue is the manager that assign the project to different threads and we grab the main thread
-////                searchBar.resignFirstResponder()
-////            }
-//
-//        } else {
-//            contSearch(searchBar)
-//        }
-//    }
-//
-//    func contSearch(_ searchBar: UISearchBar) {
-//        let request : NSFetchRequest<Item> = Item.fetchRequest()
-//        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)//%@ sign subtututes any arguments which you try to substitute
-//        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-//        loadItems(with: request, predicate: predicate)
-//    }
-//}
+extension TodoListViewController: UISearchBarDelegate{
+
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+
+        todoItems = todoItems?.filter("title CONTAINS [cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: true)
+
+        tableView.reloadData()
+    }
+
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0{
+            loadItems()
+
+//            DispatchQueue.main.async { //DispatchQueue is the manager that assign the project to different threads and we grab the main thread
+//                searchBar.resignFirstResponder()
+//            }
+
+        }
+        else {
+            contSearch(searchBar)
+        }
+    }
+
+    func contSearch(_ searchBar: UISearchBar) {
+        todoItems = todoItems?.filter("title CONTAINS [cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: true)
+        tableView.reloadData()
+    }
+}

@@ -72,7 +72,12 @@ class CategoryViewController: UITableViewController {
             self.save(category: tempCategory)
         }
         
+        let cancel = UIAlertAction(title: "Cancel", style: .default) { (cancel) in
+            self.tableView.reloadData()
+        }
+        
         alert.addAction(action)
+        alert.addAction(cancel)
         
         alert.addTextField { (field) in
             textField = field
@@ -84,8 +89,6 @@ class CategoryViewController: UITableViewController {
     
     // MARK: - TableView Delegate Methods
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-//        tableView.deselectRow(at: indexPath, animated: true)
-        print("Going to next view")
         performSegue(withIdentifier: "goToItems", sender: self)
     }
     
@@ -94,8 +97,6 @@ class CategoryViewController: UITableViewController {
         
         if let indexPath = tableView.indexPathForSelectedRow {
             destinationVC.selectedCategory = categories?[indexPath.row]
-            print("Preparing Segue")
-            print(destinationVC.selectedCategory?.name ?? "No Category Selected")
         }
     }
     
