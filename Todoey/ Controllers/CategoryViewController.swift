@@ -8,15 +8,19 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController {
     let realm = try! Realm()
     var categories: Results<Category>?
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         loadCategories()
+        
+        tableView.separatorStyle = .none
+        
     }
 
     override func didReceiveMemoryWarning() {
@@ -31,9 +35,15 @@ class CategoryViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
-    
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        
         cell.textLabel?.text = categories?[indexPath.row].name ?? "No Categories Added Yet"
+        cell.backgroundColor = UIColor(hexString: categories?[indexPath.row].color ?? "1D9BF6")
+        
+//        if let category = categories?[indexPath.row] {
+//            cell.textLabel?.text = category.name
+//            cell.backgroundColor = UIColor(hexString: category.color ?? "1D9BF6")
+//        }
         
         return cell
     }
@@ -53,6 +63,20 @@ class CategoryViewController: UITableViewController {
         tableView.reloadData()
     }
     
+    // MARK: - Delete Data From Swipe
+    override func updateModel(at indexPath: IndexPath) {
+        print("Delete Cell")
+        if let categorySelection = self.categories?[indexPath.row] {
+            do {
+                try self.realm.write {
+                    self.realm.delete(categorySelection)
+                }
+            } catch {
+                print("Error deleting category, \(error)")
+            }
+        }
+    }
+    
     func loadCategories() {
         // Put loadingHUD
         categories = realm.objects(Category.self)
@@ -66,10 +90,13 @@ class CategoryViewController: UITableViewController {
         let alert = UIAlertController(title: "Add New Todoey Category", message: "", preferredStyle: .alert)
         
         let action = UIAlertAction(title: "Add", style: .default) { (action) in
-            let tempCategory = Category()
-            tempCategory.name = textField.text!
-            
-            self.save(category: tempCategory)
+            if textField.text! != "" {
+                let tempCategory = Category()
+                tempCategory.name = textField.text!
+                tempCategory.color = UIColor.randomFlat.hexValue()
+                
+                self.save(category: tempCategory)
+            }
         }
         
         let cancel = UIAlertAction(title: "Cancel", style: .default) { (cancel) in

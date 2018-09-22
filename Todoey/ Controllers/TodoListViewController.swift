@@ -8,7 +8,7 @@
 import UIKit
 import RealmSwift
 
-class TodoListViewController: UITableViewController {
+class TodoListViewController: SwipeTableViewController {
     
     var todoItems: Results<Item>?
     let realm = try! Realm()
@@ -21,6 +21,7 @@ class TodoListViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
 //        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
     }
     
@@ -34,7 +35,8 @@ class TodoListViewController: UITableViewController {
     
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+//        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let item = todoItems?[indexPath.row] {
             cell.textLabel?.text = item.title
@@ -85,12 +87,14 @@ class TodoListViewController: UITableViewController {
             if let currentCategory = self.selectedCategory {
                 do {
                     try self.realm.write {
-                        let newItem = Item()
-                        newItem.title = textField.text!
-                        let date = Date()
-//                        let formatter = DateFormatter()
-                        newItem.dateCreated = date
-                        currentCategory.items.append(newItem)
+                        if textField.text! != "" {
+                            let newItem = Item()
+                            newItem.title = textField.text!
+                            let date = Date()
+    //                        let formatter = DateFormatter()
+                            newItem.dateCreated = date
+                            currentCategory.items.append(newItem)
+                        }
                     }
                 }
                 catch {
@@ -126,7 +130,18 @@ class TodoListViewController: UITableViewController {
 
     }
     
-    
+    override func updateModel(at indexPath: IndexPath) {
+        if let item = todoItems?[indexPath.row] {
+            do {
+                try realm.write {
+                    realm.delete(item)
+                }
+            }
+            catch {
+                print("Error deleting item, \(error)")
+            }
+        }
+    }
     
 }
 // Mark :- Search Bar method
